@@ -1,0 +1,28 @@
+# Interroll MultiControl (EtherNet/IP, process image "Universal Full", program "I/O Device")
+
+connection:
+  ip: 192.168.0.1
+  output_instance: 100   # assembly with motor speeds (10 bytes)
+  input_instance: 101    # assembly with sensors + status (36 bytes)
+  cycle_time: 0.05       # [s] interval between write/read cycles
+  max_errors: 5          # consecutive failed cycles before the connection counts as lost
+
+safety:
+  # [s] stop all motors if no motor command arrives within this time.
+  # null = off. If you enable it, your program must re-send commands regularly.
+  command_timeout: null
+
+# name: port (RD 1-4) and optional direction flip
+motors:
+  motor1: {port: 1, invert: false}
+  motor2: {port: 2, invert: false}
+  motor3: {port: 3, invert: false}
+  motor4: {port: 4, invert: false}
+
+# name: port (Sensor 1-4, or 5-8 if I/O 1-4 are configured as sensors)
+# blocked_level: raw bit value that means "object present" (your sensors read 0 when blocked)
+sensors:
+  sensor1: {port: 1, blocked_level: 0}
+  sensor2: {port: 2, blocked_level: 0}
+  sensor3: {port: 3, blocked_level: 0}
+  sensor4: {port: 4, blocked_level: 0}
