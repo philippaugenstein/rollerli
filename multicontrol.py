@@ -25,7 +25,11 @@ from dataclasses import dataclass
 from pathlib import Path
 
 import yaml
-from pycomm3 import CIPDriver, Services
+
+try:
+    from pycomm3 import CIPDriver, Services
+except ImportError:  # remote clients (ZeroMQ) only need the constants/dataclasses
+    CIPDriver = Services = None
 
 log = logging.getLogger("multicontrol")
 
@@ -100,6 +104,8 @@ class MultiControl:
     def connect(self, timeout: float = 3.0) -> "MultiControl":
         if self._thread and self._thread.is_alive():
             return self
+        if CIPDriver is None:
+            raise MultiControlError("pycomm3 is not installed (pip install pycomm3)")
         self._drv = CIPDriver(self.ip)
         self._drv.open()
         self._fault = None

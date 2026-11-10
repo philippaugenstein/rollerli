@@ -9,7 +9,6 @@ import argparse
 import time
 
 import zones
-from multicontrol import MultiControl
 
 DEFAULT_SPEED = 40    # [%]
 DEFAULT_ROUNDS = 5
@@ -27,11 +26,12 @@ def main():
                    help=f"seconds to wait at the end (default {DEFAULT_WAIT:g})")
     p.add_argument("-m", "--middle", type=zones.position_arg, default=DEFAULT_MIDDLE,
                    help=f"position to shake at (default {DEFAULT_MIDDLE})")
+    zones.add_remote_arg(p)
     args = p.parse_args()
     if not zones.FIRST < args.middle < zones.LAST:
         p.error(f"middle must be between {zones.FIRST} and {zones.LAST} (exclusive)")
 
-    with MultiControl(zones.CONFIG) as mc:
+    with zones.open_conveyor(args) as mc:
         if not zones.occupied(mc):
             print("waiting for a box ...")
             zones.wait_for_box(mc)

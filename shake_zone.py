@@ -7,7 +7,6 @@
 import argparse
 
 import zones
-from multicontrol import MultiControl
 
 
 def main():
@@ -18,11 +17,12 @@ def main():
                    help=f"number of forward+backward jolts (default {zones.SHAKE_CYCLES})")
     p.add_argument("-i", "--interval", type=float, default=zones.SHAKE_INTERVAL,
                    help=f"seconds per jolt, min 0.1 (default {zones.SHAKE_INTERVAL})")
+    zones.add_remote_arg(p)
     args = p.parse_args()
     if args.interval < 0.1:
         p.error("interval must be at least 0.1 s")
 
-    with MultiControl(zones.CONFIG) as mc:
+    with zones.open_conveyor(args) as mc:
         zones.shake(mc, args.speed, args.interval, args.cycles)
         print("done")
 

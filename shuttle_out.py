@@ -8,7 +8,6 @@ goal position (default: the beginning), running only the sections it is on.
 import argparse
 
 import zones
-from multicontrol import MultiControl
 
 DEFAULT_SPEED = 40   # [%]
 
@@ -19,9 +18,10 @@ def main():
                    help=f"speed in %% (default {DEFAULT_SPEED})")
     p.add_argument("-g", "--goal", type=zones.position_arg, default=zones.FIRST,
                    help=f"position {zones.FIRST}-{zones.LAST} to stop at (default {zones.FIRST} = beginning)")
+    zones.add_remote_arg(p)
     args = p.parse_args()
 
-    with MultiControl(zones.CONFIG) as mc:
+    with zones.open_conveyor(args) as mc:
         zones.move_to(mc, args.goal, args.speed, zones.BACKWARD)
         print("done")
 

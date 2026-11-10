@@ -12,6 +12,16 @@ safety:
   # null = off. If you enable it, your program must re-send commands regularly.
   command_timeout: null
 
+# ZeroMQ bridge (multicontrol_server.py on the Pi, scripts with --remote anywhere)
+remote:
+  # address the server listens on. 127.0.0.1 = only this machine (testing).
+  # To allow other devices use "tcp://*:5555" - note: no authentication!
+  bind: "tcp://127.0.0.1:5555"
+  # address the scripts connect to with --remote (on another device: the Pi's IP)
+  connect: "tcp://127.0.0.1:5555"
+  # [s] server stops all motors if it hears nothing from any client for this long
+  watchdog: 1.0
+
 # name: port (RD 1-4) and optional direction flip
 motors:
   motor1: {port: 1, invert: false}

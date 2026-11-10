@@ -19,7 +19,7 @@ import logging
 import sys
 import time
 
-from multicontrol import MIN_SPEED, MAX_SPEED, MultiControl
+from multicontrol import MIN_SPEED, MAX_SPEED, MultiControl, MultiControlError
 
 # ------------------------------------------------------------------ settings
 CONFIG = "config.yaml"
@@ -160,6 +160,28 @@ def shake(mc: MultiControl, speed: int = SHAKE_SPEED, interval: float = SHAKE_IN
 
 
 # ------------------------------------------------------------- CLI helpers
+def add_remote_arg(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument("-r", "--remote", nargs="?", const="config", metavar="ADDR",
+                        help="go through multicontrol_server.py via ZeroMQ instead of talking to "
+                             "the device directly (ADDR e.g. tcp://192.168.0.10:5555, "
+                             "default: config.yaml remote.connect)")
+
+
+def open_conveyor(args: argparse.Namespace):
+    """MultiControl (direct) or RemoteMultiControl (ZeroMQ), depending on --remote."""
+    if not getattr(args, "remote", None):
+        return MultiControl(CONFIG)
+    from multicontrol_client import RemoteMultiControl   # needs pyzmq only when used
+    address = args.remote
+    if address == "config":
+        import yaml
+        with open(CONFIG) as f:
+            remote = (yaml.safe_load(f) or {}).get("remote") or {}
+        address = remote.get("connect", "tcp://127.0.0.1:5555")
+    print(f"using server at {address}")
+    return RemoteMultiControl(address)
+
+
 def speed_arg(text: str) -> int:
     v = int(text)
     if not MIN_SPEED <= v <= MAX_SPEED:
@@ -179,7 +201,7 @@ def run(main) -> None:
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
     try:
         main()
-    except (TimeoutError, BoxNotFound, ValueError) as e:
+    except (TimeoutError, BoxNotFound, ValueError, MultiControlError) as e:
         sys.exit(f"aborted: {e}")
     except KeyboardInterrupt:
         sys.exit("aborted by user")
