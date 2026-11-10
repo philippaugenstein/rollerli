@@ -8,8 +8,9 @@ made of one motor and the sensor that tells whether the box is there:
                 ----------- forward ----------->
                 <---------- backward -----------
 
-Only the sections the box is currently on (sensor blocked) and the next one
-in the direction of travel are driven; all other rollers stand still.
+Only the sections the box is currently on (sensor blocked), the one ahead and
+the one behind it are driven; a section keeps running for RUN_ON seconds after
+the box left its sensor. All other rollers stand still.
 """
 from __future__ import annotations
 
@@ -30,6 +31,8 @@ ZONES = [                     # (motor, sensor) per position, beginning -> end
 ]
 FIRST, LAST = 0, len(ZONES) - 1
 STEP_TIMEOUT = 10.0           # [s] abort if the sensors do not change for this long while moving
+RUN_ON = 1.5                  # [s] keep a section running after the box left its sensor
+                              #     (the box still rests partly on those rollers)
 POLL = 0.02                   # [s] control loop interval
 
 SHAKE_SPEED = 90              # [%] shaking speed
@@ -90,11 +93,14 @@ def move_to(mc: MultiControl, goal: int, speed: int, direction: int,
     print(f"box at position {lead} -> {word} to position {goal}")
 
     def zones_for(positions):
+        # section of the box, the next one ahead and the one behind (the box body
+        # extends behind its sensor and may rest mostly on those rollers)
         lo, hi = (FIRST, goal) if direction == FORWARD else (goal, LAST)
-        return {i for p in positions for i in (p, p + direction) if lo <= i <= hi}
+        return {i for p in positions for i in (p - direction, p, p + direction) if lo <= i <= hi}
 
     active = zones_for(occ_ref)
     last_occ, last_change, last_lead = occ, time.monotonic(), lead
+    seen = {p: last_change for p in occ_ref}   # position -> last time its sensor was blocked
     try:
         while True:
             occ = occupied(mc)
@@ -106,8 +112,12 @@ def move_to(mc: MultiControl, goal: int, speed: int, direction: int,
             elif now - last_change > step_timeout:
                 raise TimeoutError(f"box did not move on within {step_timeout:.0f} s "
                                    f"(sensors blocked at {occ or 'none'})")
+            for p in occ:
+                seen[p] = now
+            recent = [p for p, t in seen.items() if now - t <= RUN_ON]
+            if recent:
+                active = zones_for(recent)
             if occ:
-                active = zones_for(occ)
                 cur = max(occ) if direction == FORWARD else min(occ)
                 if cur != last_lead:
                     print(f"  position {cur}")
