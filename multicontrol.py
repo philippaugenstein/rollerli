@@ -29,6 +29,11 @@ from pycomm3 import CIPDriver, Services
 
 log = logging.getLogger("multicontrol")
 
+# pycomm3 logs every generic_message() call at INFO ("Sending generic message",
+# "Generic message ... completed"). With two calls per cycle this floods the
+# terminal, so only let its warnings/errors through.
+logging.getLogger("pycomm3").setLevel(logging.WARNING)
+
 MIN_SPEED = 5      # device accepts 5..100 % (or 0 = stop)
 MAX_SPEED = 100
 N_MOTORS = 4
