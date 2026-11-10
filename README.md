@@ -9,6 +9,7 @@ Control of an Interroll MultiControl roller conveyor (4 sections) over EtherNet/
 | `shuttle_in.py`, `shuttle_out.py` | move the box forward / backward to a position (`-s` speed, `-g` goal 0-3) |
 | `shake_zone.py` | shake the box where it is |
 | `loop.py` | N x (in, wait, back to middle, shake), then out |
+| `manual.py` | drive with the arrow keys (`-s` speed, up/down changes it live, `--latch` for tap-to-start) |
 | `multicontrol_server.py`, `multicontrol_client.py` | ZeroMQ bridge so scripts can run on another device |
 
 ## Install (Raspberry Pi OS)
