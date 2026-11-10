@@ -34,6 +34,7 @@ class RemoteMultiControl:
         self._sock = None
         self._hb_stop = threading.Event()
         self._hb_thread: threading.Thread | None = None
+        self._lost = False      # set after an unanswered request: fail fast from then on
 
     # ------------------------------------------------------------ connection
     def connect(self) -> "RemoteMultiControl":
@@ -138,9 +139,12 @@ class RemoteMultiControl:
     def _call(self, call: str, *args):
         if self._sock is None:
             raise MultiControlError("not connected")
+        if self._lost:
+            raise MultiControlError(f"connection to server at {self.address} lost")
         with self._lock:
             self._sock.send_json({"call": call, "args": list(args)})
             if not self._sock.poll(self._timeout_ms):
+                self._lost = True
                 raise MultiControlError(f"server at {self.address} did not answer '{call}'")
             reply = self._sock.recv_json()
         if "error" in reply:
@@ -158,3 +162,4 @@ class RemoteMultiControl:
         self._sock.close()
         self._ctx.term()
         self._sock = self._ctx = None
+        self._lost = False

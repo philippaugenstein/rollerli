@@ -127,9 +127,9 @@ def main():
                     sys.stdout.flush()
                     shown = line
         finally:
-            zones.stop(mc)
-            termios.tcsetattr(fd, termios.TCSADRAIN, old_tty)
+            termios.tcsetattr(fd, termios.TCSADRAIN, old_tty)   # first, even if stopping fails
             print()
+            zones.stop(mc)   # if this fails, closing the connection / server watchdog stops the motors
 
 
 if __name__ == "__main__":
